@@ -1,0 +1,132 @@
+{
+  "name": "US NPI Dental & Medical Clinics Owner Phone & Email Lead Generator",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## US NPI Dental & Medical Clinics Owner Phone & Email Lead Generator\n\n**Powered by Apify Actor:** [US NPI Healthcare & Dental Clinics Leads Scraper](https://apify.com/willowy_catamaran_fco/us-npi-healthcare-clinic-leads-scraper)\n\n### Quick Setup (2 minutes)\n1. Get your API token from [Apify Console -> Settings -> Integrations](https://console.apify.com/settings/integrations).\n2. Set the environment variable `APIFY_API_TOKEN` in n8n (or paste your token into the Query Parameter of the **Run Apify B2B Actor** node).\n3. Connect the output of **Keep Actionable Records** to Google Sheets, HubSpot, Pipedrive, Clay, or Slack.",
+        "height": 280,
+        "width": 520
+      },
+      "id": "sticky-setup-note",
+      "name": "Setup Instructions",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        180,
+        60
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 24
+            }
+          ]
+        }
+      },
+      "id": "schedule-trigger-node",
+      "name": "Daily Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        200,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.apify.com/v2/acts/willowy_catamaran_fco~us-npi-healthcare-clinic-leads-scraper/run-sync-get-dataset-items",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "token",
+              "value": "={{ $env.APIFY_API_TOKEN }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"specialtyTaxonomy\": \"Dentist\",\n  \"stateCode\": \"FL\",\n  \"city\": \"Miami\",\n  \"enrichDomainsAndEmails\": true,\n  \"maxItems\": 30\n}",
+        "options": {
+          "timeout": 300000
+        }
+      },
+      "id": "apify-http-node",
+      "name": "Run Apify B2B Actor",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        460,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "cond-non-empty",
+              "leftValue": "={{ $json.primaryEmail }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "filter-verified-node",
+      "name": "Keep Actionable Records",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2,
+      "position": [
+        720,
+        400
+      ]
+    }
+  ],
+  "connections": {
+    "Daily Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Run Apify B2B Actor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run Apify B2B Actor": {
+      "main": [
+        [
+          {
+            "node": "Keep Actionable Records",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true
+  }
+}
